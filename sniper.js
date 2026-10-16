@@ -4,18 +4,15 @@ import https from 'https';
 import tls from 'tls';
 import WebSocket from 'ws';
 
-// قراءة بيانات الاعتماد بأمان من بيئة الاستضافة (Environment Variables)
 const TOKEN = process.env.DISCORD_TOKEN;
 const PASSWORD = process.env.DISCORD_PASSWORD;
 
-// قائمة السيرفرات اللي تبي الحساب يراقبها
 const TARGET_SERVERS = [
     '1362759838622417228'
-    // 'أيدي_سيرفر_ثاني_هنا',
 ];
 
 const TARGET_CODE = '467';
-const MY_SERVER = '1362759838622417228'; // سيرفرك اللي بينسحب له الرابط
+const MY_SERVER = '1362759838622417228';
 const API_HOST = 'canary.discord.com';
 const API_IP = '162.159.135.232';
 const REQ = 4;
@@ -26,14 +23,12 @@ let h2;
 let h2Session;
 let mfaToken = '';
 
-// إنشاء سيرفر وهمي (بورت وهمي) لضمان استقرار الاستضافة ومنع إغلاق السكريبت
+// سيرفر وهمي للحفاظ على استقرار الاستضافة
 const PORT = process.env.PORT || 3000;
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('Lightning Sniper is active and running!\n');
-}).listen(PORT, () => {
-    console.log(`\x1b[36m[PORT ACTIVE]\x1b[0m السيرفر الوهمي يعمل بنجاح على البورت: \x1b[33m${PORT}\x1b[0m`);
-});
+    res.end('Lightning Sniper active\n');
+}).listen(PORT);
 
 const MFA_HEADERS = {
     'User-Agent': 'Chrome/124',
@@ -106,22 +101,26 @@ const BASE_HEADERS = {
 };
 
 const patch = code => {
-    const startTime = process.hrtime.bigint();
     const body = Buffer.from(`{"code":"${code}"}`);
     const headers = { ...BASE_HEADERS, 'content-length': String(body.length) };
     if (mfaToken) headers['x-discord-mfa-authorization'] = mfaToken;
 
     for (let i = 0; i < REQ; i++) {
+        // تسجيل وقت البدء الفعلي لكل طلب بشكل منفصل ودقيق جداً
+        const startTime = process.hrtime.bigint();
         const req = h2.request(headers);
+        
         req.on('data', chunk => {
             const endTime = process.hrtime.bigint();
             const durationMs = Number(endTime - startTime) / 1_000_000;
             const resStr = chunk.toString();
             
-            if (resStr.includes('uses') || resStr.includes(`"code":"${TARGET_CODE}"`)) {
-                console.log(`\x1b[32m[🔥 LIGHTNING SUCCESS]\x1b[0m تم سحب الرابط بنجاح! السرعة الفعلية: \x1b[33m${durationMs.toFixed(2)} ms\x1b[0m`);
+            // التحقق من استجابة السحب الحقيقية بدقة
+            if (resStr.includes(`"code":"${code}"`) || resStr.includes('uses')) {
+                console.log(`\x1b[32m[🔥 REAL SNIPE RESULT]\x1b[0m تم رصد الاستجابة للرابط ${code} | السرعة الفعلية الدقيقة: \x1b[33m${durationMs.toFixed(2)} ms\x1b[0m`);
             }
         });
+        
         req.end(body);
     }
 };
@@ -158,7 +157,7 @@ const connectGateway = () => {
         }
 
         if (msg.t === 'READY') {
-            console.log(`\x1b[32m[LIGHTNING READY]\x1b[0m الأداة جاهزة لخطف الرابط: \x1b[33m${TARGET_CODE}\x1b[0m بأقصى سرعة ممكنة.`);
+            console.log(`\x1b[32m[LIGHTNING READY]\x1b[0m الأداة متصلة ومتاهبة للرابط: \x1b[33m${TARGET_CODE}\x1b[0m`);
         }
 
         if (msg.t === 'GUILD_UPDATE') {
