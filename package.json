@@ -1,0 +1,13 @@
+{
+  "name": "discord-vanity-sniper",
+  "version": "1.0.0",
+  "description": "Lightning fast Discord vanity URL sniper",
+  "main": "index.js",
+  "type": "module",
+  "dependencies": {
+    "ws": "^8.16.0"
+  },
+  "scripts": {
+    "start": "node index.js"
+  }
+}
